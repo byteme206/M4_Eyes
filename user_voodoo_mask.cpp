@@ -23,13 +23,7 @@ String stdata = "";
 #define LED_PIN    8
 #define LED_COUNT  10
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
-if (maskname == "Bilious") {
-  uint32_t baseColor = strip.Color(60, 200, 20);
-}
-
-if (maskname == "Cankerous") {
-  uint32_t baseColor = strip.Color(200, 0, 20);
-}
+uint32_t baseColor = 0;
 
 
 
@@ -69,7 +63,13 @@ float look_other_y(void) {
 
 
 void speaking(void) {
-  //code goes here
+  if (maskname == "Bilious") {
+    baseColor = strip.Color(60, 200, 20);
+  }
+
+  if (maskname == "Cankerous") {
+    baseColor = strip.Color(200, 0, 20);
+  }
   yield();
 }
 
