@@ -1,150 +1,172 @@
 #if 1 // Change to 0 to disable this code (must enable ONE user*.cpp only!)
 
 #include "globals.h"
+#include <Adafruit_NeoPixel.h>
 
-static char* maskname = "Bilious";  // Update for mask name. Used as a reference in serial output. Bilious or Cankerous.
+String maskname = "Bilious";  // Update for mask name: Bilious or Cankerous.
 static bool animating = false;
-static uint32_t animStartTime = 0;
-static uint32_t animTransitionTime = 0;
-static float lookX = 0.0;
-static float lookY = 0.0;
+uint32_t animStartTime = 0;
+uint32_t animTransitionTime = 0;
+String stdata = "";
 
+// Define animation mappings for meaningful switch statements
+#define LOOP 0
+#define LOOK_MME 1
+#define LOOK_OTHER 2
+#define LOOK_FRONT 3
+#define LOOK_LEFT 4
+#define LOOK_RIGHT 5
+#define LOOK_UP 6
+#define LOOK_DOWN 7
 
-// No-Timer delay
-void ntDelay(uint32_t value) {
-  uint32_t ntStartTime = millis();
+//Neopixel setup
+#define LED_PIN    8
+#define LED_COUNT  10
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+if (maskname == "Bilious") {
+  uint32_t baseColor = strip.Color(60, 200, 20);
+}
 
-  while (millis() <= ntStartTime + value) {
-    yield();
-  }
+if (maskname == "Cankerous") {
+  uint32_t baseColor = strip.Color(200, 0, 20);
 }
 
 
-// Animations
-void look_mme(void) {
+
+// Positional helpers
+float look_mme_x(void) {
 
   if ( maskname == "Bilious" ) {
-    lookX = -0.45;
+    return -0.45;
   }
 
   if ( maskname == "Cankerous" ) {
-    lookX = 0.45;
+    return 0.45;
   }
-
-  lookY = -0.6;
-  
 }
 
 
-void look_other(void) {
+float look_mme_y(void) {
+  return -0.6;
+}
+
+
+float look_other_x(void) {
 
   if ( maskname == "Bilious" ) {
-    lookX = -0.85;
-    lookY = 0;
+    return -0.85;
   }
 
   if ( maskname == "Cankerous" ) {
-    lookX = 0.85;
-    lookY = 0;
+    return 0.85;
   }
 }
 
 
-void look_kids(void) {
-  lookX = 0.25;
-  lookY = -0.4;
+float look_other_y(void) {
+  return 0.0;
 }
 
 
-void look_front(void) {
-  lookX = 0;
-  lookY = 0;
-}
-
-
-void look_loop(void) {
-  moveEyesRandomly = true;
-
-}
-
-
-void cross_eyes(void) {
-  // Can't set booped globally. 
+void speaking(void) {
+  //code goes here
+  yield();
 }
 
 
 void user_setup(void) {
   showSplashScreen = false;
+  strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
+  strip.show();            // Turn OFF all pixels ASAP
+  strip.setBrightness(50); // Set BRIGHTNESS to about 1/5 (max = 255)
+  Serial.println("Voodoo mask user setup code initialized.");
 }
 
 
 void user_loop(void) {
+  byte ch;
+  
   if (!animating) {
     
     if (Serial.available()) {
-      
-      int command = Serial.parseInt(SKIP_ALL);
-      
-      switch(command) {
-        case 0:
-          animating = true;
-          animStartTime = millis();
-          animTransitionTime = 2500;
-          look_loop();
-          Serial.write(strcat(maskname, ": look_loop"));
-          break;
-        case 1:
-          animating = true;
-          animStartTime = millis();
-          animTransitionTime = 3000;
-          look_other();
-          Serial.write(strcat(maskname, ": look_other"));
-          break;
-        case 2:
-          animating = true;
-          animStartTime = millis();
-          animTransitionTime = 3000;
-          look_mme();
-          Serial.write(strcat(maskname, ": look_mme"));
-          break;
-        case 3:
-          animating = true;
-          animStartTime = millis();
-          animTransitionTime = 2500;
-          look_front();
-          Serial.write(strcat(maskname, ": look_front"));
-          break;
-        case 4:
-          animating = true;
-          look_kids();
-          animStartTime = millis();
-          animTransitionTime = 3000;
-          Serial.write(strcat(maskname, ": look_kids"));
-          break;
-        case 5:
-          animating = true;
-          cross_eyes();
-          animStartTime = millis();
-          animTransitionTime = 2500;
-          Serial.write(strcat(maskname, ": cross_eyes"));
-          break;
+      ch = Serial.read();
+      stdata += (char)ch;
+
+      if (ch=='\r') {  // Command recevied and ready.
+         stdata.trim();
+         if (stdata.length() == 1) {
+
+          switch(stdata.toInt()) {
+            case LOOP:
+              moveEyesRandomly = true;
+              break;
+            case LOOK_MME:
+              moveEyesRandomly = false;
+              animating = true;
+              animTransitionTime = 2000;
+              eyeTargetX = look_mme_x();
+              eyeTargetY = look_mme_y(); 
+              break;
+            case LOOK_OTHER:
+              moveEyesRandomly = false;
+              animating = true;
+              animTransitionTime = 2000;
+              eyeTargetX = look_other_x();
+              eyeTargetY = look_other_y();
+              break;
+            case LOOK_FRONT:
+              moveEyesRandomly = false;
+              animating = true;
+              animTransitionTime = 2000;
+              eyeTargetX = 0.0;
+              eyeTargetY = 0.0;
+              break;
+            case LOOK_LEFT:
+              moveEyesRandomly = false;
+              animating = true;
+              animTransitionTime = 2000;
+              eyeTargetX = -0.9;
+              eyeTargetY = 0.0;
+              break;
+            case LOOK_RIGHT:
+              moveEyesRandomly = false;
+              animating = true;
+              animTransitionTime = 2000;
+              eyeTargetX = 0.9;
+              eyeTargetY = 0.0;
+              break;
+            case LOOK_UP:
+              moveEyesRandomly = false;
+              animating = true;
+              animTransitionTime = 2000;
+              eyeTargetX = 0.0;
+              eyeTargetY = 0.9;
+              break;
+            case LOOK_DOWN:
+              moveEyesRandomly = false;
+              animating = true;
+              animTransitionTime = 2000;
+              eyeTargetX = 0.0;
+              eyeTargetY = -0.9;
+              break;
+          }
+         }
+         
+         stdata = ""; // Clear the string ready for the next command.
       }
-      
-      eyeTargetX = lookX;
-      eyeTargetY = lookY;
       
     }
   } else {
     
     uint32_t elapsed = millis() - animStartTime;
 
-    if (elapsed < animTransitionTime) {
+    if (elapsed <= animTransitionTime) {
       float ratio = (float)elapsed / (float)animTransitionTime;
-      yield();
+      Serial.println(maskname +": Animating...");
     } else {
       animating = false;
     }  
   }
 }
 
-#endif // 0
+#endif // 1
