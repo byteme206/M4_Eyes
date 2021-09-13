@@ -99,57 +99,55 @@ void user_loop(void) {
           switch(stdata.toInt()) {
             case LOOP:
               moveEyesRandomly = true;
+              animTransitionTime = 2000;
               break;
             case LOOK_MME:
               moveEyesRandomly = false;
-              animating = true;
               animTransitionTime = 2000;
               eyeTargetX = look_mme_x();
               eyeTargetY = look_mme_y(); 
               break;
             case LOOK_OTHER:
               moveEyesRandomly = false;
-              animating = true;
               animTransitionTime = 2000;
               eyeTargetX = look_other_x();
               eyeTargetY = look_other_y();
               break;
             case LOOK_FRONT:
               moveEyesRandomly = false;
-              animating = true;
               animTransitionTime = 2000;
               eyeTargetX = 0.0;
               eyeTargetY = 0.0;
               break;
             case LOOK_LEFT:
               moveEyesRandomly = false;
-              animating = true;
               animTransitionTime = 2000;
               eyeTargetX = -0.9;
               eyeTargetY = 0.0;
               break;
             case LOOK_RIGHT:
               moveEyesRandomly = false;
-              animating = true;
               animTransitionTime = 2000;
               eyeTargetX = 0.9;
               eyeTargetY = 0.0;
               break;
             case LOOK_UP:
               moveEyesRandomly = false;
-              animating = true;
               animTransitionTime = 2000;
               eyeTargetX = 0.0;
               eyeTargetY = 0.9;
               break;
             case LOOK_DOWN:
               moveEyesRandomly = false;
-              animating = true;
               animTransitionTime = 2000;
               eyeTargetX = 0.0;
               eyeTargetY = -0.9;
               break;
           }
+          
+          animating = true;
+          animStartTime = millis();
+          
          }
          
          stdata = ""; // Clear the string ready for the next command.
