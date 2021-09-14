@@ -3,6 +3,7 @@
 #include "globals.h"
 #include <Adafruit_NeoPixel.h>
 
+
 String maskname = "Bilious";  // Update for mask name: Bilious or Cankerous.
 static bool animating = false;
 static bool speaking = false;
@@ -24,8 +25,12 @@ String stdata = "";
 #define SPEAKING 8
 
 //Neopixel setup
-#define LED_PIN    D2
+#define LED_PIN 8
 #define LED_COUNT  10
+byte rbyte = 0x00;
+byte gbyte = 0x00;
+byte bbyte = 0x00;
+
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 
@@ -81,18 +86,26 @@ void maskSpeak(byte red, byte green, byte blue, int SparkleDelay, int SpeedDelay
 }
 
 
+void goSpeak(void) {
+  if (maskname == "Bilious") {
+    rbyte = 0x86; 
+    gbyte = 0x8F;
+    bbyte = 0x0A;
+  } else {
+    rbyte = 0xA1; 
+    gbyte = 0x0B;
+    bbyte = 0x00;
+  }
+  maskSpeak(rbyte, gbyte, bbyte, 10, random(10, 100));
+}
+
+
 void user_setup(void) {
   showSplashScreen = false;
   strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();            // Turn OFF all pixels ASAP
   strip.setBrightness(50); // Set BRIGHTNESS to about 1/5 (max = 255)
   Serial.println("Voodoo mask user setup code initialized: " + maskname);
-  
-  if (maskname == "Bilious") {
-    static byte basecolor[] = {0x86, 0x8F, 0x0A};
-  } else {
-    static byte basecolor[] = {0xA1, 0x0B, 0x00};
-  }
 }
 
 
@@ -115,42 +128,56 @@ void user_loop(void) {
               animTransitionTime = 2000;
               break;
             case LOOK_MME:
+              animating = true;
+              animStartTime = millis();
               moveEyesRandomly = false;
               animTransitionTime = 2000;
               eyeTargetX = look_mme_x();
               eyeTargetY = look_mme_y(); 
               break;
             case LOOK_OTHER:
+              animating = true;
+              animStartTime = millis();
               moveEyesRandomly = false;
               animTransitionTime = 2000;
               eyeTargetX = look_other_x();
               eyeTargetY = look_other_y();
               break;
             case LOOK_FRONT:
+              animating = true;
+              animStartTime = millis();
               moveEyesRandomly = false;
               animTransitionTime = 2000;
               eyeTargetX = 0.0;
               eyeTargetY = 0.0;
               break;
             case LOOK_LEFT:
+              animating = true;
+              animStartTime = millis();
               moveEyesRandomly = false;
               animTransitionTime = 2000;
               eyeTargetX = -0.9;
               eyeTargetY = 0.0;
               break;
             case LOOK_RIGHT:
+              animating = true;
+              animStartTime = millis();
               moveEyesRandomly = false;
               animTransitionTime = 2000;
               eyeTargetX = 0.9;
               eyeTargetY = 0.0;
               break;
             case LOOK_UP:
+              animating = true;
+              animStartTime = millis();
               moveEyesRandomly = false;
               animTransitionTime = 2000;
               eyeTargetX = 0.0;
               eyeTargetY = 0.9;
               break;
             case LOOK_DOWN:
+              animating = true;
+              animStartTime = millis();
               moveEyesRandomly = false;
               animTransitionTime = 2000;
               eyeTargetX = 0.0;
@@ -160,11 +187,8 @@ void user_loop(void) {
               speaking = true;
               speakingTime = 2000;
               speakingStartTime = millis();
-              maskSpeak(basecolor[0], basecolor[1], basecolor[2], 10, random(10, 100));
+              goSpeak();
           }
-          
-          animating = true;
-          animStartTime = millis();
           
          }
          
@@ -187,8 +211,8 @@ void user_loop(void) {
   if (speaking) {
     uint32_t elapsed = millis() - speakingStartTime;
 
-    if (elapsed <= speakingTransitionTime) {
-      float ratio = (float)elapsed / (float)speakingTransitionTime;
+    if (elapsed <= speakingTime) {
+      float ratio = (float)elapsed / (float)speakingTime;
       Serial.println(maskname +": Speaking... " + String(ratio) + "%");
     } else {
       speaking = false;
