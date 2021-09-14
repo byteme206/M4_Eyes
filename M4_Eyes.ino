@@ -69,7 +69,7 @@ double   irisValue               = 0.5;
 int      iPupilFactor            = 42;
 uint32_t boopSum                 = 0,
          boopSumFiltered         = 0;
-bool     booped                  = false;
+static bool     booped                  = false;
 int      fixate                  = 7;
 uint8_t  lightSensorFailCount    = 0;
 
