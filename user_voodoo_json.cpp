@@ -10,9 +10,9 @@ String maskname = "Bilious";  // Update for mask name: Bilious or Cankerous.
 bool animating = false;
 bool speaking = false;
 uint32_t animStartTime = 0;
-uint32_t animTransitionTime = 0;
+uint32_t animTransitionTime = 2000;
 uint32_t speakingStartTime = 0;
-uint32_t speakingTime = 0;
+uint32_t speakingTime = 2000;
 
 //Neopixel setup
 #define LED_PIN 2
