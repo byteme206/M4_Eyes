@@ -1,2 +1,2 @@
-*.DS_Store
-user_neopixel.cpp
+.DS_Store
+*/.DS_Store

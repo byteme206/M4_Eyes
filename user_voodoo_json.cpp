@@ -2,28 +2,17 @@
 
 #include "globals.h"
 #include <Adafruit_NeoPixel.h>
+#include <ArduinoJson.h>
 
 
+// Mask configuration
 String maskname = "Bilious";  // Update for mask name: Bilious or Cankerous.
-static bool animating = false;
-static bool speaking = false;
+bool animating = false;
+bool speaking = false;
 uint32_t animStartTime = 0;
 uint32_t animTransitionTime = 0;
 uint32_t speakingStartTime = 0;
 uint32_t speakingTime = 0;
-byte ch;
-String stdata = "";
-
-// Define animation mappings for meaningful switch statements
-#define LOOP 0
-#define LOOK_MME 1
-#define LOOK_OTHER 2
-#define LOOK_FRONT 3
-#define LOOK_LEFT 4
-#define LOOK_RIGHT 5
-#define LOOK_UP 6
-#define LOOK_DOWN 7
-#define SPEAKING 8
 
 //Neopixel setup
 #define LED_PIN 2
@@ -70,24 +59,20 @@ float look_other_y(void) {
 }
 
 
-void maskSpeak(byte red, byte green, byte blue, int SparkleDelay, int SpeedDelay) {
+void mask_speak(byte red, byte green, byte blue, int SparkleDelay, int SpeedDelay) {
   uint32_t startingTime = millis(); 
   strip.fill(red,green,blue);
   int Pixel = random(LED_COUNT);
   strip.setPixelColor(Pixel,0xff,0xff,0xff);
   strip.show();
-  while (millis() > startingTime + (SparkleDelay * 1000)){
-    yield();
-  }
+  while (millis() > startingTime + (SparkleDelay * 1000)){}
   strip.setPixelColor(Pixel,red,green,blue);
   strip.show();
-  while (millis() > startingTime + ((SparkleDelay + SpeedDelay) * 1000)) {
-    yield();  
-  }
+  while (millis() > startingTime + ((SparkleDelay + SpeedDelay) * 1000)) {}
 }
 
 
-void goSpeak(void) {
+void go_speak(int speaktime) {
   if (maskname == "Bilious") {
     rbyte = 0x86; 
     gbyte = 0x8F;
@@ -97,7 +82,7 @@ void goSpeak(void) {
     gbyte = 0x0B;
     bbyte = 0x00;
   }
-  maskSpeak(rbyte, gbyte, bbyte, 10, random(10, 100));
+  mask_speak(rbyte, gbyte, bbyte, 10, random(10, 100));
 }
 
 
@@ -112,90 +97,73 @@ void user_setup(void) {
 
 void user_loop(void) {
   
-  if (!animating) {
-    
+  if (!animating && (!speaking)) {
+    int size_ = 0;
+    String payload;
+
     if (Serial.available()) {
-      ch = Serial.read();
-      stdata += (char)ch;
+      payload = Serial.readStringUntil('\n');
+      StaticJsonDocument<512> doc;
+      DeserializationError error = deserializeJson(doc, payload);
 
-      if (ch=='\r') {  // Command recevied and ready.
-         stdata.trim();
-         if (stdata.length() == 1) {
+      if (error) {
+        Serial.println(error.c_str());
+        return;
+      }
 
-          switch(stdata.toInt()) {
-            case LOOP:
-              moveEyesRandomly = true;
-              animTransitionTime = 2000;
-              break;
-            case LOOK_MME:
-              animating = true;
-              animStartTime = millis();
-              moveEyesRandomly = false;
-              animTransitionTime = 2000;
-              eyeTargetX = look_mme_x();
-              eyeTargetY = look_mme_y(); 
-              break;
-            case LOOK_OTHER:
-              animating = true;
-              animStartTime = millis();
-              moveEyesRandomly = false;
-              animTransitionTime = 2000;
-              eyeTargetX = look_other_x();
-              eyeTargetY = look_other_y();
-              break;
-            case LOOK_FRONT:
-              animating = true;
-              animStartTime = millis();
-              moveEyesRandomly = false;
-              animTransitionTime = 2000;
-              eyeTargetX = 0.0;
-              eyeTargetY = 0.0;
-              break;
-            case LOOK_LEFT:
-              animating = true;
-              animStartTime = millis();
-              moveEyesRandomly = false;
-              animTransitionTime = 2000;
-              eyeTargetX = -0.9;
-              eyeTargetY = 0.0;
-              break;
-            case LOOK_RIGHT:
-              animating = true;
-              animStartTime = millis();
-              moveEyesRandomly = false;
-              animTransitionTime = 2000;
-              eyeTargetX = 0.9;
-              eyeTargetY = 0.0;
-              break;
-            case LOOK_UP:
-              animating = true;
-              animStartTime = millis();
-              moveEyesRandomly = false;
-              animTransitionTime = 2000;
-              eyeTargetX = 0.0;
-              eyeTargetY = 0.9;
-              break;
-            case LOOK_DOWN:
-              animating = true;
-              animStartTime = millis();
-              moveEyesRandomly = false;
-              animTransitionTime = 2000;
-              eyeTargetX = 0.0;
-              eyeTargetY = -0.9;
-              break;
-            case SPEAKING:
-              speaking = true;
-              speakingTime = 2000;
-              speakingStartTime = millis();
-              goSpeak();
-          }
-          
-         }
-         
-         stdata = ""; // Clear the string ready for the next command.
+      if (doc["command"] == "speak") {
+        go_speak(doc["speakTime"]);
+      }
+
+      if (doc["command"] == "loop") {
+        moveEyesRandomly = true;
+        animTransitionTime = doc["transitionTime"];
+      }
+
+      if (doc["command"] == "animate") {
+        animating = true;
+        animTransitionTime = doc["transitionTime"];
+        animStartTime = millis();
+        moveEyesRandomly = false;
+
+        if (doc["animation"] == "look_mme") {
+          eyeTargetX = look_mme_x();
+          eyeTargetY = look_mme_y();
+        }
+
+        if (doc["animation"] == "look_other") {
+          eyeTargetX = look_other_x();
+          eyeTargetY = look_other_y();
+        }
+
+        if (doc["animation"] == "look_front") {
+          eyeTargetX = 0.0;
+          eyeTargetY = 0.0;
+        }
+
+        if (doc["animation"] == "look_left") {
+          eyeTargetX = -0.9;
+          eyeTargetY = 0.0;
+        }
+
+        if (doc["animation"] == "look_right") {
+          eyeTargetX = 0.9;
+          eyeTargetY = 0.0;
+        }
+
+        if (doc["animation"] == "look_up") {
+          eyeTargetX = 0.0;
+          eyeTargetY = 0.9;
+        }
+
+        if (doc["animation"] == "look_down") {
+          eyeTargetX = 0.0;
+          eyeTargetY = -0.9;
+        }
       }
       
     }
+    
   } else {
     
     uint32_t elapsed = millis() - animStartTime;
