@@ -11,6 +11,7 @@ uint32_t animStartTime = 0;
 uint32_t animTransitionTime = 0;
 uint32_t speakingStartTime = 0;
 uint32_t speakingTime = 0;
+byte ch;
 String stdata = "";
 
 // Define animation mappings for meaningful switch statements
@@ -25,7 +26,7 @@ String stdata = "";
 #define SPEAKING 8
 
 //Neopixel setup
-#define LED_PIN 8
+#define LED_PIN 2
 #define LED_COUNT  10
 byte rbyte = 0x00;
 byte gbyte = 0x00;
@@ -102,15 +103,14 @@ void goSpeak(void) {
 
 void user_setup(void) {
   showSplashScreen = false;
-  strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
-  strip.show();            // Turn OFF all pixels ASAP
+  strip.begin();           // Initialize the NeoPixel strip object (REQUIRED)
+  strip.show();            // Turn OFF all pixels ASAP (intialized to black, above)
   strip.setBrightness(50); // Set BRIGHTNESS to about 1/5 (max = 255)
   Serial.println("Voodoo mask user setup code initialized: " + maskname);
 }
 
 
 void user_loop(void) {
-  byte ch;
   
   if (!animating) {
     
